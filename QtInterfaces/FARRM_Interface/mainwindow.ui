@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>646</width>
+    <height>852</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Smart F.A.R.R.M</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>0</y>
+      <width>211</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Welcome to Smart F.A.R.R.M!</string>
+    </property>
+   </widget>
+   <widget class="QTableWidget" name="tableWidget">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>40</y>
+      <width>491</width>
+      <height>761</height>
+     </rect>
+    </property>
+    <row>
+     <property name="text">
+      <string>12:00 AM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>1:00 AM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>2:00 AM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>3:00 AM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>4:00 AM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>5:00 AM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>6:00 AM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>7:00 AM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>8:00 AM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>9:00 AM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>10:00 AM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>11:00 AM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>12:00 PM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>1:00 PM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>2:00 PM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>3:00 PM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>4:00 PM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>5:00 PM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>6:00 PM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>7:00 PM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>8:00 PM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>9:00 PM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>10:00 PM</string>
+     </property>
+    </row>
+    <row>
+     <property name="text">
+      <string>11:00 PM</string>
+     </property>
+    </row>
+    <column>
+     <property name="text">
+      <string>Node 1</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Node 2</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Node 3</string>
+     </property>
+    </column>
+    <column>
+     <property name="text">
+      <string>Node 4</string>
+     </property>
+    </column>
+   </widget>
+   <widget class="QPushButton" name="pushButton">
+    <property name="geometry">
+     <rect>
+      <x>480</x>
+      <y>0</y>
+      <width>161</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Click to see data log</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>
