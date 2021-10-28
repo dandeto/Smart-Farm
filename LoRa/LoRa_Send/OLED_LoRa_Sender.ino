@@ -12,6 +12,7 @@
 
 #include "heltec.h"
 #include "images.h"
+#include "Adafruit_seesaw.h"
 
 #define BAND 915E6  //you can set band here directly,e.g. 868E6,915E6
 
@@ -19,6 +20,7 @@ unsigned int counter = 0;
 String rssi = "RSSI --";
 String packSize = "--";
 String packet;
+Adafruit_seesaw ss;
 
 void logo()
 {
@@ -29,7 +31,7 @@ void logo()
 
 void setup()
 {
-   //WIFI Kit series V1 not support Vext control
+  //WIFI Kit series V1 not support Vext control
   Heltec.begin(true /*DisplayEnable Enable*/, true /*Heltec.Heltec.Heltec.LoRa Disable*/, true /*Serial Enable*/, true /*PABOOST Enable*/, BAND /*long BAND*/);
  
   Heltec.display->init();
@@ -42,16 +44,37 @@ void setup()
   Heltec.display->drawString(0, 0, "Heltec.LoRa Initial success!");
   Heltec.display->display();
   delay(1000);
+
+  // Setup Soil Sensor
+  Serial.begin(115200);
+  Serial.println("Init Serial");
+  
+  while (!ss.begin(0x36)) {
+    Serial.println("ERROR! Seesaw not found");
+    delay(100);
+  }
+  Serial.print("Seesaw started! Version: ");
+  Serial.println(ss.getVersion(), HEX);
 }
 
 void loop()
 {
+  // init display
   Heltec.display->clear();
   Heltec.display->setTextAlignment(TEXT_ALIGN_LEFT);
   Heltec.display->setFont(ArialMT_Plain_10);
-  
+
+  // get sensor data
+  float tempC = ss.getTemp();
+  uint16_t capread = ss.touchRead(0);
+
+  // print sensor data
   Heltec.display->drawString(0, 0, "Sending packet: ");
   Heltec.display->drawString(90, 0, String(counter));
+  Heltec.display->drawString(0, 50, "Temperature: ");
+  Heltec.display->drawString(90, 50, String(tempC));
+  Heltec.display->drawString(0, 100, "Capacitive: ");
+  Heltec.display->drawString(90, 100, String(capreaad));
   Heltec.display->display();
 
   // send packet
