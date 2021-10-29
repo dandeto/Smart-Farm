@@ -31,30 +31,29 @@ void logo()
 
 void setup()
 {
-  // Setup Soil Sensor
-  /*Serial.begin(115200);
-  Serial.println("Init Serial");
-  
-  while (!ss.begin(0x36)) {
-    Serial.println("ERROR! Seesaw not found");
-    delay(100);
-  }
-  Serial.print("Seesaw started! Version: ");
-  Serial.println(ss.getVersion(), HEX);*/
-  
   //WIFI Kit series V1 not support Vext control
   Heltec.begin(true /*DisplayEnable Enable*/, true /*Heltec.Heltec.Heltec.LoRa Disable*/, true /*Serial Enable*/, true /*PABOOST Enable*/, BAND /*long BAND*/);
- 
+
   Heltec.display->init();
   Heltec.display->flipScreenVertically();  
   Heltec.display->setFont(ArialMT_Plain_10);
   logo();
   delay(1500);
   Heltec.display->clear();
+
+  // Setup Soil Sensor
+  Serial.println("Init Serial");
   
-  Heltec.display->drawString(0, 0, "Heltec.LoRa Initial success!");
+  while (!ss.begin(0x36)) { // i2c address for capacitance sensor is 0x36. it is 0x77 for the BME
+    Heltec.display->drawString(0, 0, "ERROR! Seesaw not found");
+    Heltec.display->display();
+    delay(100);
+  }
+  Heltec.display->clear();
+  Heltec.display->drawString(0, 0, "Seesaw started! V");
+  Heltec.display->drawString(85, 0, String(ss.getVersion(), HEX));
   Heltec.display->display();
-  delay(1000);
+  delay(2000);
 }
 
 void loop()
@@ -65,18 +64,17 @@ void loop()
   Heltec.display->setFont(ArialMT_Plain_10);
 
   // get sensor data
-  /*float tempC = ss.getTemp();
-  uint16_t capread = ss.touchRead(0);*/
+  float tempC = ss.getTemp();
+  uint16_t capread = ss.touchRead(0);
 
   // print sensor data
   Heltec.display->drawString(0, 0, "Sending packet: ");
   Heltec.display->drawString(90, 0, String(counter));
-  /*Heltec.display->drawString(0, 10, "Temperature: ");
+  Heltec.display->drawString(0, 10, "Temperature: ");
   Heltec.display->drawString(90, 10, String(tempC));
   Heltec.display->drawString(0, 20, "Capacitive: ");
-  Heltec.display->drawString(90, 20, String(capread));*/
+  Heltec.display->drawString(90, 20, String(capread));
   Heltec.display->display();
-
 
   // send packet
   LoRa.beginPacket();
@@ -95,7 +93,7 @@ void loop()
 
   counter++;
   digitalWrite(LED, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(1000);                       // wait for a second
+  delay(1000);               // wait for a second
   digitalWrite(LED, LOW);    // turn the LED off by making the voltage LOW
-  delay(1000);                       // wait for a second
+  delay(1000);               // wait for a second
 }
