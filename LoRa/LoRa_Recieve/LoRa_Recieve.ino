@@ -31,7 +31,7 @@ void LoRaData(){
   Heltec.display->drawStringMaxWidth(0 , 26 , 128, packet);
   Heltec.display->drawString(0, 0, rssi);  
   Heltec.display->display();
-  Serial.println("Test" + packet);
+  Serial.println(packet);
 }
 
 void cbk(int packetSize) {

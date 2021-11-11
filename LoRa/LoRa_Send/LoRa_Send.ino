@@ -12,14 +12,18 @@
 
 #include "heltec.h"
 #include "images.h"
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
 #include "Adafruit_seesaw.h"
 
 #define BAND 915E6  //you can set band here directly,e.g. 868E6,915E6
+#define SEALEVELPRESSURE_HPA (1013.25)
 
 unsigned int counter = 0;
 String rssi = "RSSI --";
 String packSize = "--";
 String packet;
+Adafruit_BME280 bme;
 Adafruit_seesaw ss;
 
 void logo()
@@ -43,8 +47,16 @@ void setup()
 
   // Setup Soil Sensor
   Serial.println("Init Serial");
-  
-  while (!ss.begin(0x36)) { // i2c address for capacitance sensor is 0x36. it is 0x77 for the BME
+
+  // Initialize BME280
+  while (!bme.begin()) {
+    Heltec.display->drawString(0, 0, "ERROR! BME not found");
+    Heltec.display->display();
+    delay(100);
+  }
+
+  // Initialize Seesaw
+  while (!ss.begin(0x36)) { // i2c address for capacitance sensor is 0x36
     Heltec.display->drawString(0, 0, "ERROR! Seesaw not found");
     Heltec.display->display();
     delay(100);
@@ -64,16 +76,20 @@ void loop()
   Heltec.display->setFont(ArialMT_Plain_10);
 
   // get sensor data
-  float tempC = ss.getTemp();
-  uint16_t capread = ss.touchRead(0);
+  float temperature  = bme.readTemperature(),
+        pressure     = bme.readPressure() / 100.0F,
+        altitude     = bme.readAltitude(SEALEVELPRESSURE_HPA),
+        humidity     = bme.readHumidity();
+  uint16_t capactive = ss.touchRead(0);
 
   // print sensor data
   Heltec.display->drawString(0, 0, "Sending packet: ");
   Heltec.display->drawString(90, 0, String(counter));
-  Heltec.display->drawString(0, 10, "Temperature: ");
-  Heltec.display->drawString(90, 10, String(tempC));
-  Heltec.display->drawString(0, 20, "Capacitive: ");
-  Heltec.display->drawString(90, 20, String(capread));
+  Heltec.display->drawString(0, 10, "Temperature: " + String(temperature) + " °C");
+  Heltec.display->drawString(0, 20, "Capacitive: " + String(capactive));
+  Heltec.display->drawString(0, 30, "Pressure: " + String(pressure) + " hPa");
+  Heltec.display->drawString(0, 40, "Approx. Altitude: " + String(altitude) + " m");
+  Heltec.display->drawString(0, 50, "Humidity: " + String(humidity) + " %");
   Heltec.display->display();
 
   // send packet
@@ -87,14 +103,20 @@ void loop()
  *   - RF_PACONFIG_PASELECT_RFO     -- LoRa single output via RFO_HF / RFO_LF, maximum output 14dBm
 */
   LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
-  LoRa.print(counter);
+  LoRa.print(counter); // Packet Number
   LoRa.print(",");
-  LoRa.print(tempC);
+  LoRa.print(temperature);
   LoRa.print(",");
-  LoRa.print(capread);        // Packet Number
+  LoRa.print(pressure);
+  LoRa.print(",");
+  LoRa.print(altitude);
+  LoRa.print(",");
+  LoRa.print(humidity);
+  LoRa.print(",");
+  LoRa.print(capactive);
   LoRa.endPacket();
 
-  counter++;
+  ++counter;
   digitalWrite(LED, HIGH);   // turn the LED on (HIGH is the voltage level)
   delay(1000);               // wait for a second
   digitalWrite(LED, LOW);    // turn the LED off by making the voltage LOW
