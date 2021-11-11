@@ -31,11 +31,12 @@ void LoRaData(){
   Heltec.display->drawString(0 , 15 , "Received "+ packSize + " bytes");
   Heltec.display->drawStringMaxWidth(0, 26, 128, packet);
   Heltec.display->display();
+  Serial.println("Test" + packet);
 }
 
 void cbk(int packetSize) {
   packet ="";
-  packetSize = String(packetSize, DEC);
+  packSize = String(packetSize, DEC);
   for (int i = 0; i < packetSize; i++) { packet += (char) LoRa.read(); }
   rssi = "RSSI " + String(LoRa.packetRssi(), DEC) ;
   LoRaData();
