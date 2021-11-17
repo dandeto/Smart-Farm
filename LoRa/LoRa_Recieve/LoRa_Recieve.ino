@@ -15,7 +15,8 @@
 #define BAND    915E6  //you can set band here directly,e.g. 868E6,915E6
 String rssi = "RSSI --";
 String packSize = "--";
-String packet ;
+String packet;
+int ids = 1;
 
 void logo(){
   Heltec.display->clear();
@@ -35,6 +36,12 @@ void LoRaData(){
 }
 
 void cbk(int packetSize) {
+  if(packetSize == 2){ // request for ID
+    LoRa.beginPacket();
+    LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
+    LoRa.print(ids++);
+    LoRa.endPacket();
+  }
   packet ="";
   packSize = String(packetSize, DEC);
   for (int i = 0; i < packetSize; i++) { packet += (char) LoRa.read(); }

@@ -1,4 +1,4 @@
-/*
+ /*
   The onboard OLED display is SSD1306 driver and I2C interface. In order to make the
   OLED correctly operation, you should output a high-low-high(1-0-1) signal by soft-
   ware to OLED's reset pin, the low-level signal at least 5ms.
@@ -23,6 +23,7 @@ unsigned int counter = 0;
 String rssi = "RSSI --";
 String packSize = "--";
 String packet;
+int id = 0;
 Adafruit_BME280 bme;
 Adafruit_seesaw ss;
 
@@ -66,6 +67,23 @@ void setup()
   Heltec.display->drawString(85, 0, String(ss.getVersion(), HEX));
   Heltec.display->display();
   delay(2000);
+
+  // get id
+  LoRa.beginPacket();
+  LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
+  LoRa.print("ID"); // Ask for ID
+  LoRa.endPacket();
+  
+  while(!id) {
+    Heltec.display->clear();
+    Heltec.display->drawString(0, 0, "Waiting for id ");
+    Heltec.display->display();
+    int packetSize = LoRa.parsePacket();
+    if (packetSize) {
+      id = LoRa.parseInt();
+    }
+    delay(10);
+  }
 }
 
 void loop()
@@ -83,8 +101,7 @@ void loop()
   uint16_t capactive = ss.touchRead(0);
 
   // print sensor data
-  Heltec.display->drawString(0, 0, "Sending packet: ");
-  Heltec.display->drawString(90, 0, String(counter));
+  Heltec.display->drawString(0, 0, "Sending packet: " + String(counter) + " ID: " + id);
   Heltec.display->drawString(0, 10, "Temperature: " + String(temperature) + " °C");
   Heltec.display->drawString(0, 20, "Capacitive: " + String(capactive));
   Heltec.display->drawString(0, 30, "Pressure: " + String(pressure) + " hPa");
