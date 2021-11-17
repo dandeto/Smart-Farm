@@ -7,7 +7,6 @@
   OLED_SDA -- GPIO4
   OLED_SCL -- GPIO15
   OLED_RST -- GPIO16
-  
 */
 
 #include "heltec.h"
