@@ -7,7 +7,6 @@
   OLED_SDA -- GPIO4
   OLED_SCL -- GPIO15
   OLED_RST -- GPIO16
-  
 */
 
 #include "heltec.h"
@@ -24,14 +23,50 @@ String rssi = "RSSI --";
 String packSize = "--";
 String packet;
 int id = 0;
+volatile bool rx = false;
 Adafruit_BME280 bme;
 Adafruit_seesaw ss;
+float temperature, pressure, altitude, humidity; 
+uint16_t capactive;
 
 void logo()
 {
   Heltec.display->clear();
   Heltec.display->drawXbm(0,5,logo_width,logo_height,logo_bits);
   Heltec.display->display();
+}
+
+// This ISR will run even during a delay function
+void getPacket(int size) {
+  if(size) rx = true;
+}
+
+void getId() {
+  while(!id) {
+    // send packet to ask for ID
+    LoRa.beginPacket();
+    LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
+    LoRa.print("ID");
+    LoRa.endPacket();
+
+    // wait ~10s for ID
+    int d = 0;
+    while(++d < 1000) {
+      Heltec.display->clear();
+      Heltec.display->drawString(0, 0, "Waiting for id ");
+      Heltec.display->display();
+      if (LoRa.parsePacket()) {
+        String type;
+        type += (char)LoRa.read(); // get first 2 bytes. check if this is an ID assignment.
+        type += (char)LoRa.read();
+        if(type == "ID") {
+          id = LoRa.parseInt();
+          break;
+        }
+      }
+      delay(10);
+    }
+  }
 }
 
 void setup()
@@ -69,39 +104,84 @@ void setup()
   delay(2000);
 
   // get id
-  LoRa.beginPacket();
-  LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
-  LoRa.print("ID"); // Ask for ID
-  LoRa.endPacket();
-  
-  while(!id) {
-    Heltec.display->clear();
-    Heltec.display->drawString(0, 0, "Waiting for id ");
-    Heltec.display->display();
-    int packetSize = LoRa.parsePacket();
-    if (packetSize) {
-      id = LoRa.parseInt();
-    }
-    delay(10);
-  }
+  getId();
+
+  Heltec.display->clear();
+  Heltec.display->drawString(0, 0, " ID " + String(id));
+  Heltec.display->display();
+  // wait for prompt to send data
+  LoRa.onReceive(getPacket);
+  LoRa.receive(); // put radio in receive mode
 }
 
-void loop()
-{
-  // init display
+void loop() {
+  // respond to request for data
+  if(rx) {
+    if(!id) { // no id, ignore all packets except for one to set the id.
+      String type;
+      type += (char)LoRa.read(); // get first 2 bytes. check if this is an ID assignment.
+      type += (char)LoRa.read();
+      Serial.println("NO ID, pkt type: " + String(type));
+      if(type == "ID") {
+        id = LoRa.parseInt();
+      }
+    } else {
+      String type;
+      type += (char)LoRa.read(); // get first 2 bytes. check if this is an ID assignment.
+      type += (char)LoRa.read();
+      Serial.println("pkt type: " + String(type));
+      int pdata = LoRa.parseInt();
+      Serial.println("PDATA: " + String(pdata));
+      if(type == "RQ" && pdata == id) {
+        LoRa.beginPacket();
+        /*
+         * LoRa.setTxPower(txPower,RFOUT_pin);
+         * txPower -- 0 ~ 20
+         * RFOUT_pin could be RF_PACONFIG_PASELECT_PABOOST or RF_PACONFIG_PASELECT_RFO
+         *   - RF_PACONFIG_PASELECT_PABOOST -- LoRa single output via PABOOST, maximum output 20dBm
+         *   - RF_PACONFIG_PASELECT_RFO     -- LoRa single output via RFO_HF / RFO_LF, maximum output 14dBm
+        */
+        LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
+        LoRa.print(temperature);
+        LoRa.print(",");
+        LoRa.print(pressure);
+        LoRa.print(",");
+        LoRa.print(altitude);
+        LoRa.print(",");
+        LoRa.print(humidity);
+        LoRa.print(",");
+        LoRa.print(capactive);  
+        LoRa.endPacket();
+        LoRa.receive(); // stay in receiver mode
+        digitalWrite(LED, HIGH);
+        delay(1000);
+        digitalWrite(LED, LOW);
+        Serial.println("RESPOND");
+      } else if(type == "RS" && pdata == 0) { // server sends 0 means reset
+        Serial.println("RESET");
+        id = 0;
+        LoRa.beginPacket();
+        LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
+        LoRa.print("ID");
+        LoRa.endPacket();
+        LoRa.receive();
+      }
+    }
+    rx = false;
+  }
+
+  // get sensor data
+  temperature = bme.readTemperature();
+  pressure    = bme.readPressure() / 100.0F;
+  altitude    = bme.readAltitude(SEALEVELPRESSURE_HPA);
+  humidity    = bme.readHumidity();
+  capactive   = ss.touchRead(0);
+
+  // print sensor data
   Heltec.display->clear();
   Heltec.display->setTextAlignment(TEXT_ALIGN_LEFT);
   Heltec.display->setFont(ArialMT_Plain_10);
-
-  // get sensor data
-  float temperature  = bme.readTemperature(),
-        pressure     = bme.readPressure() / 100.0F,
-        altitude     = bme.readAltitude(SEALEVELPRESSURE_HPA),
-        humidity     = bme.readHumidity();
-  uint16_t capactive = ss.touchRead(0);
-
-  // print sensor data
-  Heltec.display->drawString(0, 0, "Sending packet: " + String(counter) + " ID: " + id);
+  Heltec.display->drawString(0, 0, "Sending packet: " + String(counter) + " ID: " + String(id));
   Heltec.display->drawString(0, 10, "Temperature: " + String(temperature) + " °C");
   Heltec.display->drawString(0, 20, "Capacitive: " + String(capactive));
   Heltec.display->drawString(0, 30, "Pressure: " + String(pressure) + " hPa");
@@ -109,33 +189,5 @@ void loop()
   Heltec.display->drawString(0, 50, "Humidity: " + String(humidity) + " %");
   Heltec.display->display();
 
-  // send packet
-  LoRa.beginPacket();
-  
-/*
- * LoRa.setTxPower(txPower,RFOUT_pin);
- * txPower -- 0 ~ 20
- * RFOUT_pin could be RF_PACONFIG_PASELECT_PABOOST or RF_PACONFIG_PASELECT_RFO
- *   - RF_PACONFIG_PASELECT_PABOOST -- LoRa single output via PABOOST, maximum output 20dBm
- *   - RF_PACONFIG_PASELECT_RFO     -- LoRa single output via RFO_HF / RFO_LF, maximum output 14dBm
-*/
-  LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
-  LoRa.print(counter); // Packet Number
-  LoRa.print(",");
-  LoRa.print(temperature);
-  LoRa.print(",");
-  LoRa.print(pressure);
-  LoRa.print(",");
-  LoRa.print(altitude);
-  LoRa.print(",");
-  LoRa.print(humidity);
-  LoRa.print(",");
-  LoRa.print(capactive);
-  LoRa.endPacket();
-
-  ++counter;
-  digitalWrite(LED, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(1000);               // wait for a second
-  digitalWrite(LED, LOW);    // turn the LED off by making the voltage LOW
-  delay(1000);               // wait for a second
+  delay(2000); // wait for 2 seconds
 }
