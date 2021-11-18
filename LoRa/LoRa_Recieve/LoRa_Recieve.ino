@@ -74,6 +74,7 @@ void setup() {
   LoRa.print("RS "); // reset
   LoRa.print(0); // init message - reset connection for anything that was previously connected
   LoRa.endPacket();
+  Serial.println("RESET");
   
   LoRa.receive();
 }

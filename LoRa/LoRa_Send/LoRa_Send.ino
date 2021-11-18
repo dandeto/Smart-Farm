@@ -24,6 +24,7 @@ String packSize = "--";
 String packet;
 int id = 0;
 volatile bool rx = false;
+int miss = 0;
 Adafruit_BME280 bme;
 Adafruit_seesaw ss;
 float temperature, pressure, altitude, humidity; 
@@ -124,6 +125,16 @@ void loop() {
       Serial.println("NO ID, pkt type: " + String(type));
       if(type == "ID") {
         id = LoRa.parseInt();
+        miss = 0;
+      } else if( ++miss > 10){
+      // miss 10 times? Ask for ID again.
+        miss = 0;
+        // ask again
+        LoRa.beginPacket();
+        LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
+        LoRa.print("ID");
+        LoRa.endPacket();
+        LoRa.receive();
       }
     } else {
       String type;
