@@ -17,7 +17,7 @@ String rssi = "RSSI --";
 String packSize = "--";
 String packet;
 int ids = 1;
-int id = 1;
+int id = 0;
 volatile bool rx = false;
 volatile int packetSize = 0;
 
@@ -45,9 +45,9 @@ void cbk(int packetSize) {
     LoRa.print("ID ");
     LoRa.print(ids++);
     LoRa.endPacket();
-    Serial.println("Sent ID" + String(ids-1));
+    //Serial.println("Sent ID" + String(ids-1)); // debug
   } else if(packetSize) {
-    Serial.println("Got Data");
+    //Serial.println("Got Data"); // debug
     packet ="";
     packSize = String(packetSize, DEC);
     for (int i = 0; i < packetSize; i++) { packet += (char) LoRa.read(); }
@@ -58,11 +58,7 @@ void cbk(int packetSize) {
 
 // This ISR will run even during a delay function
 void receiveISR(int size) {
-  if(size) {
-    rx = true;
-    packetSize = size;
-    Serial.println("ISR");
-  }
+  if(size) rx = true;
 }
 
 void setup() { 
@@ -85,46 +81,28 @@ void setup() {
   LoRa.print("RS "); // reset
   LoRa.print(0); // init message - reset connection for anything that was previously connected
   LoRa.endPacket();
-  Serial.println("RESET");
+  //Serial.println("RESET"); // debug
 
-  LoRa.onReceive(receiveISR);
+  //LoRa.onReceive(receiveISR);
   LoRa.receive();
 }
 
 void loop() {
-  // did this receive a packet?
-  if(rx) {
-    Serial.println("RX");
-    // handle packet
-    if(packetSize == 2){ // request for ID
-      LoRa.beginPacket();
-      LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
-      LoRa.print("ID ");
-      LoRa.print(ids++);
-      LoRa.endPacket();
-      Serial.println("Sent ID " + String(ids-1));
-    } else if(packetSize) {
-      Serial.println("Got Data");
-      packet ="";
-      packSize = String(packetSize, DEC);
-      for (int i = 0; i < packetSize; i++) { packet += (char) LoRa.read(); }
-      Serial.println(packet);
-      rssi = "RSSI " + String(LoRa.packetRssi(), DEC) ;
-      LoRaData();
-    }
-    rx = false;
+  // Delay - poll just in case there is a new connection
+  int d = 0;
+  while(++d < 1000) {
+    int packetSize = LoRa.parsePacket();
+    if (packetSize) { cbk(packetSize);  }
+    delay(10);
   }
-  delay(2000);
 
   // request packet from each sensor node
   if(++id<ids) {
-    // prompt packet
-    Serial.println("Request From ID " + String(id));
+    do {
+    //Serial.println("Request From ID " + String(id)); // debug
     LoRa.beginPacket();
-    LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
-    LoRa.print("RQ "); // request
-    LoRa.print(id);
-    LoRa.endPacket();
+    LoRa.print("RQ " + String(id));
+    } while(!LoRa.endPacket());
   } else {
     id = 0; // start over
   }

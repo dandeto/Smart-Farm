@@ -29,6 +29,8 @@ Adafruit_BME280 bme;
 Adafruit_seesaw ss;
 float temperature, pressure, altitude, humidity; 
 uint16_t capactive;
+String type; // works great when not volatile
+volatile int pdata;
 
 void logo()
 {
@@ -40,34 +42,11 @@ void logo()
 // This ISR will run even during a delay function
 void getPacket(int size) {
   if(size) rx = true;
-}
-
-void getId() {
-  while(!id) {
-    // send packet to ask for ID
-    LoRa.beginPacket();
-    LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
-    LoRa.print("ID");
-    LoRa.endPacket();
-
-    // wait ~10s for ID
-    int d = 0;
-    while(++d < 1000) {
-      Heltec.display->clear();
-      Heltec.display->drawString(0, 0, "Waiting for id ");
-      Heltec.display->display();
-      if (LoRa.parsePacket()) {
-        String type;
-        type += (char)LoRa.read(); // get first 2 bytes. check if this is an ID assignment.
-        type += (char)LoRa.read();
-        if(type == "ID") {
-          id = LoRa.parseInt();
-          break;
-        }
-      }
-      delay(10);
-    }
-  }
+  type = "";
+  type += (char)LoRa.read(); // get first 2 bytes. check if this is an ID assignment.
+  type += (char)LoRa.read();
+  pdata = LoRa.parseInt();
+  //Serial.println("Packet: " + type + String(pdata)); // debug
 }
 
 void setup()
@@ -98,83 +77,78 @@ void setup()
     Heltec.display->display();
     delay(100);
   }
-  Heltec.display->clear();
-  Heltec.display->drawString(0, 0, "Seesaw started! V");
-  Heltec.display->drawString(85, 0, String(ss.getVersion(), HEX));
-  Heltec.display->display();
-  delay(2000);
+
+  /*
+   * LoRa.setTxPower(txPower,RFOUT_pin);
+   * txPower -- 0 ~ 20
+   * RFOUT_pin could be RF_PACONFIG_PASELECT_PABOOST or RF_PACONFIG_PASELECT_RFO
+   *   - RF_PACONFIG_PASELECT_PABOOST -- LoRa single output via PABOOST, maximum output 20dBm
+   *   - RF_PACONFIG_PASELECT_RFO     -- LoRa single output via RFO_HF / RFO_LF, maximum output 14dBm
+  */
+  LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
 
   // get id
-  getId();
-
+  // TODO: Add random number as validation token
+  do {
+  LoRa.beginPacket();
+  LoRa.print("ID");
+  } while(LoRa.endPacket());
+  
   Heltec.display->clear();
   Heltec.display->drawString(0, 0, " ID " + String(id));
   Heltec.display->display();
   // wait for prompt to send data
-  LoRa.onReceive(getPacket);
+  LoRa.onReceive(getPacket); // callback for when receive done
+  //LoRa.onTxDone(onTxDone); // callback for when transmission done
   LoRa.receive(); // put radio in receive mode
 }
 
 void loop() {
   // respond to request for data
   if(rx) {
-    if(!id) { // no id, ignore all packets except for one to set the id.
-      String type;
-      type += (char)LoRa.read(); // get first 2 bytes. check if this is an ID assignment.
-      type += (char)LoRa.read();
+    Serial.println("Packet: " + type + String(pdata));
+    if(!id) { // no id, ignore all packets except for one to set the id
       Serial.println("NO ID, pkt type: " + String(type));
       if(type == "ID") {
-        id = LoRa.parseInt();
+        id = pdata;
         miss = 0;
       } else if( ++miss > 10){
-      // miss 10 times? Ask for ID again.
+        // miss 10 times? Ask for ID again.
         miss = 0;
-        // ask again
         LoRa.beginPacket();
-        LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
         LoRa.print("ID");
         LoRa.endPacket();
         LoRa.receive();
       }
     } else {
-      String type;
-      type += (char)LoRa.read(); // get first 2 bytes. check if this is an ID assignment.
-      type += (char)LoRa.read();
-      Serial.println("pkt type: " + String(type));
-      int pdata = LoRa.parseInt();
-      Serial.println("PDATA: " + String(pdata));
       if(type == "RQ" && pdata == id) {
-        LoRa.beginPacket();
-        /*
-         * LoRa.setTxPower(txPower,RFOUT_pin);
-         * txPower -- 0 ~ 20
-         * RFOUT_pin could be RF_PACONFIG_PASELECT_PABOOST or RF_PACONFIG_PASELECT_RFO
-         *   - RF_PACONFIG_PASELECT_PABOOST -- LoRa single output via PABOOST, maximum output 20dBm
-         *   - RF_PACONFIG_PASELECT_RFO     -- LoRa single output via RFO_HF / RFO_LF, maximum output 14dBm
-        */
-        LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
-        LoRa.print(temperature);
-        LoRa.print(",");
-        LoRa.print(pressure);
-        LoRa.print(",");
-        LoRa.print(altitude);
-        LoRa.print(",");
-        LoRa.print(humidity);
-        LoRa.print(",");
-        LoRa.print(capactive);  
-        LoRa.endPacket();
-        LoRa.receive(); // stay in receiver mode
+        do {
+          LoRa.beginPacket();
+          LoRa.print(id);
+          LoRa.print(",");
+          LoRa.print(temperature);
+          LoRa.print(",");
+          LoRa.print(pressure);
+          LoRa.print(",");
+          LoRa.print(altitude);
+          LoRa.print(",");
+          LoRa.print(humidity);
+          LoRa.print(",");
+          LoRa.print(capactive);
+        } while(!LoRa.endPacket()); // returns 1 on success 0 on failure
+        LoRa.receive(); // yes, actually need to put it back into receive mode after sending
+        
         digitalWrite(LED, HIGH);
-        delay(1000);
+        delay(100);
         digitalWrite(LED, LOW);
         Serial.println("RESPOND");
       } else if(type == "RS" && pdata == 0) { // server sends 0 means reset
         Serial.println("RESET");
         id = 0;
-        LoRa.beginPacket();
-        LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
-        LoRa.print("ID");
-        LoRa.endPacket();
+        do {
+          LoRa.beginPacket();
+          LoRa.print("ID");
+        } while(!LoRa.endPacket());
         LoRa.receive();
       }
     }
@@ -192,7 +166,7 @@ void loop() {
   Heltec.display->clear();
   Heltec.display->setTextAlignment(TEXT_ALIGN_LEFT);
   Heltec.display->setFont(ArialMT_Plain_10);
-  Heltec.display->drawString(0, 0, "Sending packet: " + String(counter) + " ID: " + String(id));
+  Heltec.display->drawString(0, 0,  id ? "ID: " + String(id) : "Waiting for ID...");
   Heltec.display->drawString(0, 10, "Temperature: " + String(temperature) + " °C");
   Heltec.display->drawString(0, 20, "Capacitive: " + String(capactive));
   Heltec.display->drawString(0, 30, "Pressure: " + String(pressure) + " hPa");
