@@ -70,7 +70,9 @@ void setup()
     Heltec.display->display();
     delay(100);
   }
-
+  
+  Heltec.display->clear();
+  
   // Initialize Seesaw
   while (!ss.begin(0x36)) { // i2c address for capacitance sensor is 0x36
     Heltec.display->drawString(0, 0, "ERROR! Seesaw not found");
@@ -89,14 +91,11 @@ void setup()
 
   // get id
   // TODO: Add random number as validation token
-  do {
+  //Serial.println("ask for id");
   LoRa.beginPacket();
   LoRa.print("ID");
-  } while(LoRa.endPacket());
+  LoRa.endPacket();
   
-  Heltec.display->clear();
-  Heltec.display->drawString(0, 0, " ID " + String(id));
-  Heltec.display->display();
   // wait for prompt to send data
   LoRa.onReceive(getPacket); // callback for when receive done
   //LoRa.onTxDone(onTxDone); // callback for when transmission done
@@ -104,23 +103,31 @@ void setup()
 }
 
 void loop() {
+
+  while(!id) {
+    Heltec.display->clear();
+    Heltec.display->drawString(0, 0,  id ? "ID: " + String(id) : "Waiting for ID...");
+    Heltec.display->display();
+    // ask for id
+    LoRa.beginPacket();
+    LoRa.print("ID");
+    LoRa.endPacket();
+    LoRa.receive();
+    // wait 5 seconds
+    Serial.println("Ask for ID");
+    int count = 0;
+    while(type != "ID" && ++count < 2000) {
+      delay(10);
+    }
+    if(type == "ID") {
+      Serial.println("NO ID, pkt type: " + String(type));
+      id = pdata;
+    }
+  }
+  
   // respond to request for data
   if(rx) {
     Serial.println("Packet: " + type + String(pdata));
-    if(!id) { // no id, ignore all packets except for one to set the id
-      Serial.println("NO ID, pkt type: " + String(type));
-      if(type == "ID") {
-        id = pdata;
-        miss = 0;
-      } else if( ++miss > 10){
-        // miss 10 times? Ask for ID again.
-        miss = 0;
-        LoRa.beginPacket();
-        LoRa.print("ID");
-        LoRa.endPacket();
-        LoRa.receive();
-      }
-    } else {
       if(type == "RQ" && pdata == id) {
         do {
           LoRa.beginPacket();
@@ -151,7 +158,7 @@ void loop() {
         } while(!LoRa.endPacket());
         LoRa.receive();
       }
-    }
+    
     rx = false;
   }
 
