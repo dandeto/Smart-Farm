@@ -39,11 +39,19 @@ void LoRaData(){
 }
 
 void cbk(int packetSize) {
-  if(packetSize == 2){ // request for ID
+  type = "";
+  type += (char)LoRa.read(); // get first 2 bytes. check if this is an ID assignment.
+  type += (char)LoRa.read();
+
+  if(type == "ID") { // request for ID
+    // grab token
+    long token = LoRa.parseInt();
+    Serial.println(token); // debug
     LoRa.beginPacket();
-    LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
     LoRa.print("ID ");
     LoRa.print(ids++);
+    LoRa.print(" ");
+    LoRa.print(token); // send token in reponse
     LoRa.endPacket();
     //Serial.println("Sent ID" + String(ids-1)); // debug
   } else if(packetSize) {

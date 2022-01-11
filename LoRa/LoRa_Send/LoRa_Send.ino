@@ -20,11 +20,10 @@
 
 unsigned int counter = 0;
 String rssi = "RSSI --";
-String packSize = "--";
 String packet;
 int id = 0;
+long token = 0;
 volatile bool rx = false;
-int miss = 0;
 Adafruit_BME280 bme;
 Adafruit_seesaw ss;
 float temperature, pressure, altitude, humidity; 
@@ -94,6 +93,8 @@ void setup()
   //Serial.println("ask for id");
   LoRa.beginPacket();
   LoRa.print("ID");
+  token = random(247483647);
+  LoRa.print(token); // random number as token
   LoRa.endPacket();
   
   // wait for prompt to send data
@@ -111,6 +112,8 @@ void loop() {
     // ask for id
     LoRa.beginPacket();
     LoRa.print("ID");
+    token = random(247483647);
+    LoRa.print(token);
     LoRa.endPacket();
     LoRa.receive();
     // wait 5 seconds
