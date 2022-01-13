@@ -87,15 +87,6 @@ void setup()
    *   - RF_PACONFIG_PASELECT_RFO     -- LoRa single output via RFO_HF / RFO_LF, maximum output 14dBm
   */
   LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
-
-  // get id
-  // TODO: Add random number as validation token
-  //Serial.println("ask for id");
-  LoRa.beginPacket();
-  LoRa.print("ID");
-  token = random(247483647);
-  LoRa.print(token); // random number as token
-  LoRa.endPacket();
   
   // wait for prompt to send data
   LoRa.onReceive(getPacket); // callback for when receive done
@@ -104,22 +95,21 @@ void setup()
 }
 
 void loop() {
-
   while(!id) {
     Heltec.display->clear();
     Heltec.display->drawString(0, 0,  id ? "ID: " + String(id) : "Waiting for ID...");
     Heltec.display->display();
     // ask for id
     LoRa.beginPacket();
-    LoRa.print("ID");
-    token = random(247483647);
+    LoRa.print("ID ");
+    token = random(1,247483647);
     LoRa.print(token);
     LoRa.endPacket();
     LoRa.receive();
     // wait 5 seconds
     Serial.println("Ask for ID");
     int count = 0;
-    while(type != "ID" && ++count < 2000) {
+    while(type != "ID" && ++count < 2000) { // wait 2 seconds
       delay(10);
     }
     if(type == "ID") {

@@ -1,14 +1,3 @@
-/*
-  The onboard OLED display is SSD1306 driver and I2C interface. In order to make the
-  OLED correctly operation, you should output a high-low-high(1-0-1) signal by soft-
-  ware to OLED's reset pin, the low-level signal at least 5ms.
-
-  OLED pins to ESP32 GPIOs via this connecthin:
-  OLED_SDA -- GPIO4
-  OLED_SCL -- GPIO15
-  OLED_RST -- GPIO16
-  
-*/
 #include "heltec.h" 
 #include "images.h"
 
@@ -39,20 +28,22 @@ void LoRaData(){
 }
 
 void cbk(int packetSize) {
-  type = "";
+  String type = "";
   type += (char)LoRa.read(); // get first 2 bytes. check if this is an ID assignment.
   type += (char)LoRa.read();
 
   if(type == "ID") { // request for ID
     // grab token
     long token = LoRa.parseInt();
-    Serial.println(token); // debug
-    LoRa.beginPacket();
-    LoRa.print("ID ");
-    LoRa.print(ids++);
-    LoRa.print(" ");
-    LoRa.print(token); // send token in reponse
-    LoRa.endPacket();
+    if(token) {
+      //Serial.println(token); // debug
+      LoRa.beginPacket();
+      LoRa.print("ID ");
+      LoRa.print(ids++);
+      LoRa.print(" ");
+      LoRa.print(token); // send token in reponse
+      LoRa.endPacket();
+    }
     //Serial.println("Sent ID" + String(ids-1)); // debug
   } else if(packetSize) {
     //Serial.println("Got Data"); // debug
