@@ -1,5 +1,6 @@
 #include "heltec.h" 
 #include "images.h"
+#include "Node.h"
 
 #define BAND    915E6  //you can set band here directly,e.g. 868E6,915E6
 String rssi = "RSSI --";
