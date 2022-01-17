@@ -14,6 +14,7 @@ struct Node {
 
 class NodeManager {
   Node nodes[SIZE];
+  int iterator = 0;
 
   bool full() {
     return nodes[SIZE-1].id != 0;
@@ -71,8 +72,10 @@ public:
   // exposed just in case the programmer wants to use this, but there is no need
   void prune() {
     for(int i=0; i<SIZE; ++i) {
-      if(nodes[i].requests >= LIMIT && nodes[i].responses == 0)
+      if(nodes[i].requests >= LIMIT && nodes[i].responses == 0) {
         remove(nodes[i].id);
+        if(i < iterator) --iterator;
+      }
       nodes[i].requests  = 0;
       nodes[i].responses = 0;
     }
@@ -93,7 +96,15 @@ public:
         return i+2;
       }
     }
-    return 0; // should never get hit
+    return 0;
+  }
+
+  // return the next id in the array
+  int next() {
+    if(nodes[iterator].id == 0 && iterator == 0) return 0;
+    if(iterator >= SIZE || nodes[iterator].id == 0) // too far
+      iterator = 0;
+    return nodes[iterator++].id;
   }
 
   // Use this function to track # requests sent to a node

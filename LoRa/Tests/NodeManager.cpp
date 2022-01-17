@@ -19,12 +19,14 @@ void print(NodeManager n) {
 int main() {
 	NodeManager n;
 
-	cout << "ID IS: " << n.add() << '\n';
-	cout << "ID IS: " << n.add() << '\n';
-	cout << "ID IS: " << n.add() << '\n';
-	cout << "ID IS: " << n.add() << '\n';
-	cout << "ID IS: " << n.add() << '\n';
-	cout << "ID IS: " << n.add() << '\n';
+	cout << "Get ID: " << n.next() << '\n';
+	cout << "Get ID: " << n.next() << '\n';
+	cout << "Add ID: " << n.add() << '\n';
+	cout << "Add ID: " << n.add() << '\n';
+	cout << "Add ID: " << n.add() << '\n';
+	cout << "Add ID: " << n.add() << '\n';
+	cout << "Add ID: " << n.add() << '\n';
+	cout << "Add ID: " << n.add() << '\n';
 	cout << '\n';
 
 	n.request(1);
@@ -39,13 +41,25 @@ int main() {
 	n.request(2);
 	n.request(2);
 
+	cout << "Get ID: " << n.next() << '\n';
+	cout << "Get ID: " << n.next() << '\n';
+
 	print(n);
 	
 	cout << "Prune Before Trying To Add Another Node\n\n";
 	n.prune();
 
 	print(n);
+
+	cout << "Get ID: " << n.next() << '\n';
+	cout << "Get ID: " << n.next() << "\n\n";
+
+	cout << "Add Another Node" << "\n";
+	cout << "Add ID: " << n.add() << "\n\n";
 	
-	cout << "Add Another Node - ID: " << n.add() << "\n\n";
 	print(n);
+
+	cout << "Get ID: " << n.next() << '\n';
+	cout << "Get ID: " << n.next() << '\n';
+	cout << "Get ID: " << n.next() << '\n';
 }

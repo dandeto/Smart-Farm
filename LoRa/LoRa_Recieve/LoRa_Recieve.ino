@@ -6,6 +6,7 @@
 String rssi = "RSSI --";
 String packSize = "--";
 String packet;
+NodeManager nodeManager;
 int ids = 1;
 int id = 0;
 volatile bool rx = false;
