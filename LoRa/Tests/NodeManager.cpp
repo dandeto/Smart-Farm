@@ -40,6 +40,7 @@ int main() {
 	n.request(2);
 	n.request(2);
 	n.request(2);
+	n.request(5);
 
 	cout << "Get ID: " << n.next() << '\n';
 	cout << "Get ID: " << n.next() << '\n';
@@ -62,4 +63,13 @@ int main() {
 	cout << "Get ID: " << n.next() << '\n';
 	cout << "Get ID: " << n.next() << '\n';
 	cout << "Get ID: " << n.next() << '\n';
+
+	n.request(1);
+	n.request(1);
+	n.request(1);
+	n.request(4);
+	n.request(4);
+	n.add();
+
+	print(n);
 }

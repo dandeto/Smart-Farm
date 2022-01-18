@@ -7,8 +7,8 @@ String rssi = "RSSI --";
 String packSize = "--";
 String packet;
 NodeManager nodeManager;
-int ids = 1;
-int id = 0;
+//int ids = 1;
+//int id = 0;
 volatile bool rx = false;
 volatile int packetSize = 0;
 
@@ -39,9 +39,10 @@ void cbk(int packetSize) {
     long token = LoRa.parseInt();
     if(token) {
       //Serial.println(token); // debug
+      int id = nodeManager.add();
       LoRa.beginPacket();
       LoRa.print("ID ");
-      LoRa.print(ids++);
+      LoRa.print(id);
       LoRa.print(" ");
       LoRa.print(token); // send token in reponse
       LoRa.endPacket();
@@ -49,11 +50,14 @@ void cbk(int packetSize) {
     //Serial.println("Sent ID" + String(ids-1)); // debug
   } else if(packetSize) {
     //Serial.println("Got Data"); // debug
-    packet ="";
+    int id = LoRa.parseInt(); 
+    nodeManager.response(id);
+    packet = String(id);
     packSize = String(packetSize, DEC);
     for (int i = 0; i < packetSize; i++) { packet += (char) LoRa.read(); }
     rssi = "RSSI " + String(LoRa.packetRssi(), DEC) ;
     LoRaData();
+    nodeManager.print();
   }
 }
 
@@ -98,13 +102,13 @@ void loop() {
   }
 
   // request packet from each sensor node
-  if(++id<ids) {
+  int id = nodeManager.next();
+  if(id) {
     do {
-    //Serial.println("Request From ID " + String(id)); // debug
-    LoRa.beginPacket();
-    LoRa.print("RQ " + String(id));
+      //Serial.println("Request From ID " + String(id)); // debug
+      LoRa.beginPacket();
+      LoRa.print("RQ " + String(id));
     } while(!LoRa.endPacket());
-  } else {
-    id = 0; // start over
+    nodeManager.request(id);
   }
 }

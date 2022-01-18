@@ -124,6 +124,7 @@ void loop() {
       if(type == "RQ" && pdata == id) {
         do {
           LoRa.beginPacket();
+          LoRa.print("RS"); // packet type - response
           LoRa.print(id);
           LoRa.print(",");
           LoRa.print(temperature);

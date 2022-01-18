@@ -76,8 +76,10 @@ public:
         remove(nodes[i].id);
         if(i < iterator) --iterator;
       }
-      nodes[i].requests  = 0;
-      nodes[i].responses = 0;
+      if(nodes[i].responses > 0) {
+        nodes[i].requests  = 0;
+        nodes[i].responses = 0;
+      }
     }
   }
 
@@ -86,6 +88,13 @@ public:
     prune(); // free space before adding new node
     if(full()) return 0; // cannot assign valid id because Node array is full
 
+    // check first element
+    if(nodes[0].id > 1) {
+      insert(0, Node(1));
+      return 1;
+    }
+
+    // loop thru the nodes
     for(int i=0; i<SIZE; ++i) {
       if(nodes[i].id == 0) {
         insert(i, Node(i+1));
@@ -119,5 +128,18 @@ public:
     int i = find(id);
     if(i > -1)
       ++nodes[i].responses;
+  }
+
+  void print() {
+    for(int i=0; i<SIZE; ++i) {
+      if(nodes[i].id != 0) {
+        Serial.print(nodes[i].id);
+        Serial.print(" ");
+        Serial.print(nodes[i].requests);
+        Serial.print(" ");
+        Serial.print(nodes[i].responses);
+        Serial.println();
+      }
+    }
   }
 };
