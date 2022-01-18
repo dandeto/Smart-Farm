@@ -10,7 +10,7 @@ struct Node {
 // number of nodes to keep track of
 #define SIZE 50
 // number of requests we allow with no response before removing node
-#define LIMIT 5
+#define LIMIT 3
 
 class NodeManager {
   Node nodes[SIZE];
@@ -69,12 +69,14 @@ class NodeManager {
 public:
   NodeManager(){}
 
-  // exposed just in case the programmer wants to use this, but there is no need
+  // Exposed just in case the programmer wants to use this
   void prune() {
     for(int i=0; i<SIZE; ++i) {
+      if(nodes[i].id == 0) return;
       if(nodes[i].requests >= LIMIT && nodes[i].responses == 0) {
         remove(nodes[i].id);
         if(i < iterator) --iterator;
+        --i; // redo this loop because the array shifted
       }
       if(nodes[i].responses > 0) {
         nodes[i].requests  = 0;

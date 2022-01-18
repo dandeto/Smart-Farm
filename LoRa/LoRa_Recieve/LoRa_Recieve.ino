@@ -7,8 +7,6 @@ String rssi = "RSSI --";
 String packSize = "--";
 String packet;
 NodeManager nodeManager;
-//int ids = 1;
-//int id = 0;
 volatile bool rx = false;
 volatile int packetSize = 0;
 
@@ -31,7 +29,7 @@ void LoRaData(){
 
 void cbk(int packetSize) {
   String type = "";
-  type += (char)LoRa.read(); // get first 2 bytes. check if this is an ID assignment.
+  type += (char)LoRa.read(); // packet type is first 2 bytes
   type += (char)LoRa.read();
 
   if(type == "ID") { // request for ID
@@ -47,18 +45,16 @@ void cbk(int packetSize) {
       LoRa.print(token); // send token in reponse
       LoRa.endPacket();
     }
-    //Serial.println("Sent ID" + String(ids-1)); // debug
   } else if(packetSize) {
-    //Serial.println("Got Data"); // debug
     int id = LoRa.parseInt(); 
     nodeManager.response(id);
     packet = String(id);
     packSize = String(packetSize, DEC);
     for (int i = 0; i < packetSize; i++) { packet += (char) LoRa.read(); }
-    rssi = "RSSI " + String(LoRa.packetRssi(), DEC) ;
+    rssi = "RSSI " + String(LoRa.packetRssi(), DEC);
     LoRaData();
-    nodeManager.print();
   }
+  //nodeManager.print(); // debug
 }
 
 // This ISR will run even during a delay function
@@ -93,7 +89,7 @@ void setup() {
 }
 
 void loop() {
-  // Delay - poll just in case there is a new connection
+  // 10s delay - poll to recieve data
   int d = 0;
   while(++d < 1000) {
     int packetSize = LoRa.parsePacket();
