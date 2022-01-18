@@ -3,12 +3,8 @@
 #include "Node.h"
 
 #define BAND    915E6  //you can set band here directly,e.g. 868E6,915E6
-String rssi = "RSSI --";
-String packSize = "--";
-String packet;
+
 NodeManager nodeManager;
-volatile bool rx = false;
-volatile int packetSize = 0;
 
 void logo(){
   Heltec.display->clear();
@@ -16,18 +12,18 @@ void logo(){
   Heltec.display->display();
 }
 
-void LoRaData(){
+void displayPacket(String rssi, int packetSize, String packet){
   Heltec.display->clear();
   Heltec.display->setTextAlignment(TEXT_ALIGN_LEFT);
   Heltec.display->setFont(ArialMT_Plain_10);
-  Heltec.display->drawString(0, 15, "Received "+ packSize + " bytes");
+  Heltec.display->drawString(0, 15, "Received "+ String(packetSize, DEC) + " bytes");
   Heltec.display->drawStringMaxWidth(0 , 26 , 128, packet);
-  Heltec.display->drawString(0, 0, rssi);  
+  Heltec.display->drawString(0, 0, rssi);
   Heltec.display->display();
   Serial.println(packet);
 }
 
-void cbk(int packetSize) {
+void readPacket(int packetSize) {
   String type = "";
   type += (char)LoRa.read(); // packet type is first 2 bytes
   type += (char)LoRa.read();
@@ -36,34 +32,31 @@ void cbk(int packetSize) {
     // grab token
     long token = LoRa.parseInt();
     if(token) {
-      //Serial.println(token); // debug
+      //Serial.println("Recieved token " + String(token)); // debug
       int id = nodeManager.add();
-      LoRa.beginPacket();
-      LoRa.print("ID ");
-      LoRa.print(id);
-      LoRa.print(" ");
-      LoRa.print(token); // send token in reponse
-      LoRa.endPacket();
+      delay(1000);
+      do {
+        LoRa.beginPacket();
+        LoRa.print("ID ");
+        LoRa.print(id);
+        LoRa.print(" ");
+        LoRa.print(token);
+      } while(!LoRa.endPacket());
+      LoRa.receive();
+      //Serial.println("Sent Packet: ID " + String(id) + " " + String(token)); //debug
     }
   } else if(packetSize) {
-    int id = LoRa.parseInt(); 
+    int id = LoRa.parseInt();
     nodeManager.response(id);
-    packet = String(id);
-    packSize = String(packetSize, DEC);
+    String packet = String(id);
     for (int i = 0; i < packetSize; i++) { packet += (char) LoRa.read(); }
-    rssi = "RSSI " + String(LoRa.packetRssi(), DEC);
-    LoRaData();
+    String rssi = "RSSI " + String(LoRa.packetRssi(), DEC);
+    displayPacket(rssi, packetSize, packet);
   }
   //nodeManager.print(); // debug
 }
 
-// This ISR will run even during a delay function
-void receiveISR(int size) {
-  if(size) rx = true;
-}
-
 void setup() { 
-   //WIFI Kit series V1 not support Vext control
   Heltec.begin(true /*DisplayEnable Enable*/, true /*Heltec.Heltec.Heltec.LoRa Disable*/, false /*Serial Enable*/, true /*PABOOST Enable*/, BAND /*long BAND*/);
   Serial.begin(115200);
   Heltec.display->init();
@@ -79,12 +72,9 @@ void setup() {
   
   LoRa.beginPacket();
   LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
-  LoRa.print("RS "); // reset
-  LoRa.print(0); // init message - reset connection for anything that was previously connected
+  LoRa.print("RS "); // tell nodes to reset
+  LoRa.print(0);
   LoRa.endPacket();
-  //Serial.println("RESET"); // debug
-
-  //LoRa.onReceive(receiveISR);
   LoRa.receive();
 }
 
@@ -93,7 +83,7 @@ void loop() {
   int d = 0;
   while(++d < 1000) {
     int packetSize = LoRa.parsePacket();
-    if (packetSize) { cbk(packetSize);  }
+    if (packetSize) readPacket(packetSize);
     delay(10);
   }
 
