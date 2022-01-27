@@ -1,19 +1,5 @@
-Pi/__pycache__/
-Pi/DashApp/__pycache__/app.cpython-39.pyc
-.gitignore
+# ignore all pycache folders
+**/__pycache__/
+
 Pi/DashApp/venv/
-Pi/DashApp/__pycache__/routes.cpython-39.pyc
-Pi/DashApp/layout/__pycache__/layout.cpython-39.pyc
-Pi/DashApp/environment/__pycache__/settings.cpython-39.pyc
-Pi/DashApp/layout/header/__pycache__/header_callbacks.cpython-39.pyc
-Pi/DashApp/layout/header/__pycache__/header.cpython-39.pyc
-Pi/DashApp/pages/about/__pycache__/interaction.cpython-39.pyc
-Pi/DashApp/pages/about/__pycache__/view.cpython-39.pyc
-Pi/DashApp/pages/demo_iris/__pycache__/data.cpython-39.pyc
-Pi/DashApp/pages/demo_iris/__pycache__/interaction.cpython-39.pyc
-Pi/DashApp/pages/farm_overview/__pycache__/data.cpython-39.pyc
-Pi/DashApp/pages/farm_overview/__pycache__/interaction.cpython-39.pyc
-Pi/DashApp/pages/farm_overview/__pycache__/view.cpython-39.pyc
-Pi/DashApp/utils/__pycache__/constants.cpython-39.pyc
-Pi/DashApp/utils/__pycache__/external_assets.cpython-39.pyc
 Pi/DashApp/cache-directory/
