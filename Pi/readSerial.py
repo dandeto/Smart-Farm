@@ -13,4 +13,3 @@ while(1):
             senderId, temp, pressure, altitude, humidity, capacitive = data.split(',')
             time = dt.now()
             file.write(f"{str(time)}, {senderId}, {temp}, {pressure}, {altitude}, {humidity}, {capacitive}\n")
-
