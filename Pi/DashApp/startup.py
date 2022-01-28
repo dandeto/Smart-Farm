@@ -4,7 +4,6 @@ This is the starting point of the app. It's like main.py. Run this file when you
 from dash import dcc
 from dash import html
 import dash_bootstrap_components as dbc
-
 from app import app, server
 from routes import render_page_content
 

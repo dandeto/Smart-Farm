@@ -14,6 +14,7 @@ import utils.constants as uc
 # Apps
 from pages.about import view as view_about
 from pages.farm_overview import view as view_farm_overview
+from pages.demo_iris import view as view_iris
 
 @app.callback(
   Output("page-content", "children"), 
@@ -24,9 +25,15 @@ def render_page_content(pathname):
         return view_about.layout
     elif pathname == uc.farm_overview_path:
         return view_farm_overview.layout
+    elif pathname == uc.iris_path:
+        return view_iris.layout
     else:
         return ([
-            html.H1("404: Not found", className="text-danger"),
-            html.Hr(),
-            html.P(f"The pathname {pathname} was not recognised..."),
+            html.Center([
+                html.B(),
+                html.B(),
+                html.H1("404: Not found"),
+                html.Hr(),
+                html.P(f"The pathname {pathname} was not recognised..."),
+            ])
         ])

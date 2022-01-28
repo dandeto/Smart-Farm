@@ -7,8 +7,7 @@ import plotly.express as px         # easier, quicker, less control
 from sklearn.cluster import KMeans
 
 from app import app
-from pages.demo_iris.data import df
-
+import pages.demo_iris.data as d
 
 @app.callback(
     Output("cluster-graph", "figure"),
@@ -21,7 +20,7 @@ from pages.demo_iris.data import df
 def make_graph(x, y, n_clusters):
     # minimal input validation, make sure there's at least one cluster
     km = KMeans(n_clusters=max(n_clusters, 1))
-    iris = df()
+    iris = d.dataframe()
     df = iris.loc[:, [x, y]]
     km.fit(df.values)
     df["cluster"] = km.labels_
@@ -56,7 +55,7 @@ def make_graph(x, y, n_clusters):
 # make sure that x and y values can't be the same variable
 def filter_options(v):
     """Disable option v"""
-    iris = df()
+    iris = d.dataframe()
 
     return [
         {"label": col, "value": col, "disabled": col == v}

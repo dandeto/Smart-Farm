@@ -10,5 +10,5 @@ def query_data():
     iris = pd.DataFrame(iris_raw["data"], columns=iris_raw["feature_names"])
     return iris.to_json(date_format='iso', orient='split')
 
-def df():    
+def dataframe():    
     return pd.read_json(query_data(), orient='split')
