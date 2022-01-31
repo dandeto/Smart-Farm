@@ -5,6 +5,7 @@
   OLED_RST -- GPIO16
 */
 
+#include <Preferences.h>
 #include "heltec.h"
 #include "images.h"
 #include <Adafruit_Sensor.h>
@@ -14,6 +15,7 @@
 #define BAND 915E6  //you can set band here directly,e.g. 868E6,915E6
 #define SEALEVELPRESSURE_HPA (1013.25)
 
+unsigned long hardware_id = 0;
 int id = 0;
 long token = 0;
 volatile long rx_token = 0;
@@ -55,6 +57,23 @@ void setup()
   delay(1500);
   Heltec.display->clear();
 
+  // Get Hardware ID
+  Preferences p;
+  while (!p.begin("node", true)) {
+    Heltec.display->drawString(0, 0, "Cannot Access NVM\n - This Board May Be Broken");
+    Heltec.display->display();
+    delay(100);
+  }
+
+  hardware_id = p.getULong("id", 0);
+  if(hardware_id == 0) {
+    Heltec.display->drawString(0, 0, "Board not provisioned.");
+    Heltec.display->display();
+    while(1);
+  }
+
+  p.end();
+
   // Initialize BME280
   while (!bme.begin()) {
     Heltec.display->drawString(0, 0, "ERROR! BME not found");
@@ -87,6 +106,7 @@ void setup()
 
 void loop() {
   while(!id) {
+    delay(random(100,5000));
     Heltec.display->clear();
     Heltec.display->drawString(0, 0,  id ? "ID: " + String(id) : "Waiting for ID...");
     Heltec.display->display();
@@ -118,7 +138,7 @@ void loop() {
       do {
         LoRa.beginPacket();
         LoRa.print("RS"); // packet type - response
-        LoRa.print(id);
+        LoRa.print(hardware_id);
         LoRa.print(",");
         LoRa.print(temperature);
         LoRa.print(",");
