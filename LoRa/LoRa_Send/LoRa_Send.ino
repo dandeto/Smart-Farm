@@ -138,6 +138,8 @@ void loop() {
       do {
         LoRa.beginPacket();
         LoRa.print("RS"); // packet type - response
+        LoRa.print(id);
+        LoRa.print(",");
         LoRa.print(hardware_id);
         LoRa.print(",");
         LoRa.print(temperature);

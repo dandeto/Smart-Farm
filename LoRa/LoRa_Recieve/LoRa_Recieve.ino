@@ -46,10 +46,11 @@ void readPacket(int packetSize) {
       //Serial.println("Sent Packet: ID " + String(id) + " " + String(token)); //debug
     }
   } else if(packetSize) {
-    int id = LoRa.parseInt();
+    int id = LoRa.parseInt(); // get network id
+    LoRa.read(); // throw away comma
     nodeManager.response(id);
-    String packet = String(id);
-    for (int i = 0; i < packetSize; i++) { packet += (char) LoRa.read(); }
+    String packet;
+    for (int i = 0; i < packetSize; i++) packet += (char) LoRa.read();
     String rssi = "RSSI " + String(LoRa.packetRssi(), DEC);
     displayPacket(rssi, packetSize, packet);
   }
