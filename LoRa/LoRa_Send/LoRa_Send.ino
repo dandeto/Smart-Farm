@@ -75,7 +75,7 @@ void setup()
   p.end();
 
   // Initialize BME280
-  while (!bme.begin()) {
+  while (!bme.begin(0X76) && !bme.begin(0x77)) {
     Heltec.display->drawString(0, 0, "ERROR! BME not found");
     Heltec.display->display();
     delay(100);
