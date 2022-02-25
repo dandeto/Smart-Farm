@@ -1,16 +1,14 @@
-#include "heltec.h" 
+#include "heltec.h"
+#include "HardwareSerial.h"
 #include "images.h"
 #include "Node.h"
 
-#define BAND    915E6  //you can set band here directly,e.g. 868E6,915E6
+#define BAND             915E6 // set frequency band here,e.g. 868E6,915E6
+#define sleep_delay      10    // these are all in seconds
+#define node_sleep_delay 5
+#define request_delay    8
 
 NodeManager nodeManager;
-
-void logo(){
-  Heltec.display->clear();
-  Heltec.display->drawXbm(0,5,logo_width,logo_height,logo_bits);
-  Heltec.display->display();
-}
 
 void displayPacket(String rssi, int packetSize, String packet){
   Heltec.display->clear();
@@ -57,13 +55,25 @@ void readPacket(int packetSize) {
   //nodeManager.print(); // debug
 }
 
+void poll(int _delay) {
+  // poll for number of seconds specified by _delay 
+  int d = 0;
+  while(++d < _delay*100) {
+    int packetSize = LoRa.parsePacket();
+    if (packetSize) readPacket(packetSize);
+    delay(10);
+  }
+}
+
 void setup() { 
   Heltec.begin(true /*DisplayEnable Enable*/, true /*Heltec.Heltec.Heltec.LoRa Disable*/, false /*Serial Enable*/, true /*PABOOST Enable*/, BAND /*long BAND*/);
   Serial.begin(115200);
   Heltec.display->init();
   Heltec.display->flipScreenVertically();  
   Heltec.display->setFont(ArialMT_Plain_10);
-  logo();
+  Heltec.display->clear();
+  Heltec.display->drawXbm(0,5,logo_width,logo_height,logo_bits);
+  Heltec.display->display();
   delay(1500);
   Heltec.display->clear();
   Heltec.display->drawString(0, 0, "Heltec.LoRa Initial success!");
@@ -80,22 +90,25 @@ void setup() {
 }
 
 void loop() {
-  // 10s delay - poll to recieve data
-  int d = 0;
-  while(++d < 1000) {
-    int packetSize = LoRa.parsePacket();
-    if (packetSize) readPacket(packetSize);
-    delay(10);
-  }
+  poll(10); // poll for 10 seconds
 
-  // request packet from each sensor node
+  // Request packet from each sensor node
   int id = nodeManager.next();
-  if(id) {
+  while(id) {
     do {
-      //Serial.println("Request From ID " + String(id)); // debug
+      Serial.println("Request From ID " + String(id)); // debug
       LoRa.beginPacket();
       LoRa.print("RQ " + String(id));
     } while(!LoRa.endPacket());
     nodeManager.request(id);
+    poll(8);
+    id = nodeManager.next();
   }
+
+  // Put all nodes to sleep
+  do {
+    LoRa.beginPacket();
+    LoRa.print("SL");
+    LoRa.print(node_sleep_delay);
+  } while(!LoRa.endPacket());
 }

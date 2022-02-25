@@ -12,27 +12,21 @@
 #include <Adafruit_BME280.h>
 #include "Adafruit_seesaw.h"
 
-#define BAND 915E6  //you can set band here directly,e.g. 868E6,915E6
+#define BAND                 915E6        // you can set band here directly e.g. 868E6,915E6
 #define SEALEVELPRESSURE_HPA (1013.25)
+//#define uS_TO_S_FACTOR       1000000ULL // Conversion factor for micro seconds to seconds
 
 unsigned long hardware_id = 0;
-int id = 0;
-long token = 0;
-volatile long rx_token = 0;
-volatile bool rx = false;
+RTC_DATA_ATTR int id      = 0; // not erased in sleep mode
+long token                = 0;
+volatile long rx_token    = 0;
+volatile bool rx          = false;
 String type;
 volatile int rx_id;
 Adafruit_BME280 bme;
 Adafruit_seesaw ss;
 float temperature, pressure, altitude, humidity; 
 uint16_t capactive;
-
-void logo()
-{
-  Heltec.display->clear();
-  Heltec.display->drawXbm(0,5,logo_width,logo_height,logo_bits);
-  Heltec.display->display();
-}
 
 // This ISR will run even during a delay function
 void getPacket(int size) {
@@ -45,17 +39,41 @@ void getPacket(int size) {
   //Serial.println("Packet: " + type + " " + String(rx_id) + " " + String(token)); // debug
 }
 
-void setup()
-{
-  //WIFI Kit series V1 not support Vext control
-  Heltec.begin(true /*DisplayEnable Enable*/, true /*Heltec.Heltec.Heltec.LoRa Disable*/, true /*Serial Enable*/, true /*PABOOST Enable*/, BAND /*long BAND*/);
+// get and assign sensor data
+void setSensorData() {
+  temperature = bme.readTemperature();
+  pressure    = bme.readPressure() / 100.0F;
+  altitude    = bme.readAltitude(SEALEVELPRESSURE_HPA);
+  humidity    = bme.readHumidity();
+  capactive   = ss.touchRead(0);
+}
 
+// display sensor data to OLED screen
+void displaySensorData() {
+  Heltec.display->clear();
+  Heltec.display->setTextAlignment(TEXT_ALIGN_LEFT);
+  Heltec.display->setFont(ArialMT_Plain_10);
+  Heltec.display->drawString(0, 0,  id ? "ID: " + String(id) : "Waiting for ID...");
+  Heltec.display->drawString(0, 10, "Temperature: " + String(temperature) + " °C");
+  Heltec.display->drawString(0, 20, "Capacitive: " + String(capactive));
+  Heltec.display->drawString(0, 30, "Pressure: " + String(pressure) + " hPa");
+  Heltec.display->drawString(0, 40, "Approx. Altitude: " + String(altitude) + " m");
+  Heltec.display->drawString(0, 50, "Humidity: " + String(humidity) + " %");
+  Heltec.display->display();
+}
+
+void setup() {
+  Heltec.begin(true /*DisplayEnable Enable*/, true /*Heltec.Heltec.Heltec.LoRa Disable*/, true /*Serial Enable*/, true /*PABOOST Enable*/, BAND /*long BAND*/);
   Heltec.display->init();
   Heltec.display->flipScreenVertically();  
   Heltec.display->setFont(ArialMT_Plain_10);
-  logo();
+  Heltec.display->clear(); // need this?
+  Heltec.display->drawXbm(0,5,logo_width,logo_height,logo_bits);
+  Heltec.display->display();
   delay(1500);
   Heltec.display->clear();
+
+  Serial.println("ID is" + String(id));
 
   // Get Hardware ID
   Preferences p;
@@ -135,6 +153,7 @@ void loop() {
   if(rx) {
     Serial.println("Packet: " + type + String(rx_id));
     if(type == "RQ" && rx_id == id) { // server request packet
+      setSensorData();
       do {
         LoRa.beginPacket();
         LoRa.print("RS"); // packet type - response
@@ -153,12 +172,19 @@ void loop() {
         LoRa.print(capactive);
       } while(!LoRa.endPacket()); // returns 1 on success 0 on failure
       LoRa.receive(); // yes, actually need to put it back into receive mode after sending
+      displaySensorData();
       
       // flash LED to indicate response
       digitalWrite(LED, HIGH);
       delay(100);
       digitalWrite(LED, LOW);
-      
+
+    } else if(type == "SL") { // sleep
+      // network id should be RTC_DATA_ATTR so it persists...
+      esp_sleep_enable_timer_wakeup(rx_id * 1000000ULL);
+      Serial.println("Go to Sleep for " + String(rx_id));
+      esp_deep_sleep_start();
+      // goes back thru void setup() when timer expires
     } else if(type == "RS" && rx_id == 0) { // server reset
       Serial.println("RESET");
       id = 0; // reset
@@ -171,25 +197,6 @@ void loop() {
     
     rx = false;
   }
-
-  // get sensor data
-  temperature = bme.readTemperature();
-  pressure    = bme.readPressure() / 100.0F;
-  altitude    = bme.readAltitude(SEALEVELPRESSURE_HPA);
-  humidity    = bme.readHumidity();
-  capactive   = ss.touchRead(0);
-
-  // print sensor data
-  Heltec.display->clear();
-  Heltec.display->setTextAlignment(TEXT_ALIGN_LEFT);
-  Heltec.display->setFont(ArialMT_Plain_10);
-  Heltec.display->drawString(0, 0,  id ? "ID: " + String(id) : "Waiting for ID...");
-  Heltec.display->drawString(0, 10, "Temperature: " + String(temperature) + " °C");
-  Heltec.display->drawString(0, 20, "Capacitive: " + String(capactive));
-  Heltec.display->drawString(0, 30, "Pressure: " + String(pressure) + " hPa");
-  Heltec.display->drawString(0, 40, "Approx. Altitude: " + String(altitude) + " m");
-  Heltec.display->drawString(0, 50, "Humidity: " + String(humidity) + " %");
-  Heltec.display->display();
 
   delay(2000); // wait for 2 seconds
 }

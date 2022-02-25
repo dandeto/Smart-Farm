@@ -113,8 +113,10 @@ public:
   // return the next id in the array
   int next() {
     if(nodes[iterator].id == 0 && iterator == 0) return 0;
-    if(iterator >= SIZE || nodes[iterator].id == 0) // too far
+    if(iterator >= SIZE || nodes[iterator].id == 0) { // too far, return 0 to signal restart
       iterator = 0;
+      return 0;
+    }
     return nodes[iterator++].id;
   }
 
