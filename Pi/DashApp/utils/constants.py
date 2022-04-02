@@ -11,6 +11,6 @@ farm_overview_path = "/pages/farm_overview"
 iris_path = "/pages/iris"
 # print(iris_path)
 
-data_path = "https://raw.githubusercontent.com/dandeto/Smart-Farm/main/recieved.csv"
+data_path = "https://raw.githubusercontent.com/dandeto/Smart-Farm/main/Pi/recieved.csv"
 
 TIMEOUT = 60
