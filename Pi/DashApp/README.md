@@ -1,10 +1,5 @@
-# DASH App => Smart Farm Viewer
-
-#### Quick-Links
-* **[Architecture Notes]()**
-
-## Purpose
-The purpos of this app is to visualize smart farm data.
+## Dash App - Purpose
+The purpose of this app is to visualize smart farm data.
 
 ## Usage
 It will be used by a farm owner or manager to look at their field sensors data and judge how the soil is doing. This will allow them to make better decisions about how to keep the field and areas of it healthy.
@@ -41,8 +36,6 @@ docker-compose down
 
 Source Management Help
 https://github.com/jazzband/pip-tools
-
-
 
 ### Downloading the App
 
