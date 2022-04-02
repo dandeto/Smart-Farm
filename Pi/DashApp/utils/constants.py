@@ -2,13 +2,15 @@
 #cwdParent = Path.cwd()
 #print(cwdParent)
 
-about_path = f"/pages/about"
+about_path = "/pages/about"
 # print(about_path)
 
-farm_overview_path = f"/pages/farm_overview"
+farm_overview_path = "/pages/farm_overview"
 # print(farm_overview_path)
 
-iris_path = f"/pages/iris"
+iris_path = "/pages/iris"
 # print(iris_path)
+
+data_path = "https://raw.githubusercontent.com/dandeto/Smart-Farm/main/recieved.csv"
 
 TIMEOUT = 60

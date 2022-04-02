@@ -1,6 +1,7 @@
 """
 This is the starting point of the app. It's like main.py. Run this file when you want to run the app.
 """
+
 from dash import dcc
 from dash import html
 import dash_bootstrap_components as dbc
@@ -9,8 +10,8 @@ from routes import render_page_content
 
 # import the callbacks from each page into one place
 from pages.about.interaction import *
-from pages.farm_overview.interaction import *
 from pages.demo_iris.interaction import *
+from pages.farm_overview.interaction import *
 from layout.header.header_callbacks import *
 # Uncomment below if using the docker image. The plan is to use that mostly for production.
 # from environment.settings import APP_HOST, APP_PORT, APP_DEBUG, DEV_TOOLS_PROPS_CHECK, DEV_TOOLS_SILENCE_ROUTES, USE_RELOADER
