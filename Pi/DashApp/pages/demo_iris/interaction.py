@@ -1,6 +1,5 @@
 
 from dash.dependencies import Input, Output
-
 import plotly.graph_objs as go      # harder, more time, more control
 import plotly.express as px         # easier, quicker, less control
 

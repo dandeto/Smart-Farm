@@ -28,12 +28,4 @@ def render_page_content(pathname):
     elif pathname == uc.iris_path:
         return view_iris.layout
     else:
-        return ([
-            html.Center([
-                html.B(),
-                html.B(),
-                html.H1("404: Not found"),
-                html.Hr(),
-                html.P(f"The pathname {pathname} was not recognised..."),
-            ])
-        ])
+        return view_about.layout 
