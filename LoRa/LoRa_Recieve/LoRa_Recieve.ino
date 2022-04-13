@@ -4,8 +4,8 @@
 #include "Node.h"
 
 #define BAND             915E6 // set frequency band here,e.g. 868E6,915E6
-#define sleep_delay      10    // these are all in seconds
-#define node_sleep_delay 5
+#define sleep_delay      60    // these are all in seconds
+#define node_sleep_delay 50
 #define request_delay    8
 
 NodeManager nodeManager;
@@ -82,7 +82,7 @@ void setup() {
   delay(1000);
   
   LoRa.beginPacket();
-  LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
+  LoRa.setTxPower(20,RF_PACONFIG_PASELECT_PABOOST); //20dB output must via PABOOST
   LoRa.print("RS "); // tell nodes to reset
   LoRa.print(0);
   LoRa.endPacket();
@@ -90,13 +90,13 @@ void setup() {
 }
 
 void loop() {
-  poll(10); // poll for 10 seconds
+  poll(sleep_delay); // poll for 10 seconds
 
   // Request packet from each sensor node
   int id = nodeManager.next();
   while(id) {
     do {
-      Serial.println("Request From ID " + String(id)); // debug
+      //Serial.println("Request From ID " + String(id)); // debug
       LoRa.beginPacket();
       LoRa.print("RQ " + String(id));
     } while(!LoRa.endPacket());

@@ -115,7 +115,7 @@ void setup() {
    *   - RF_PACONFIG_PASELECT_PABOOST -- LoRa single output via PABOOST, maximum output 20dBm
    *   - RF_PACONFIG_PASELECT_RFO     -- LoRa single output via RFO_HF / RFO_LF, maximum output 14dBm
   */
-  LoRa.setTxPower(14,RF_PACONFIG_PASELECT_PABOOST);
+  LoRa.setTxPower(20,RF_PACONFIG_PASELECT_PABOOST); //20dB output must via PABOOST
   
   LoRa.onReceive(getPacket); // ISR for when receive done
   //LoRa.onTxDone(onTxDone); // ISR for when transmission done
@@ -127,6 +127,7 @@ void loop() {
     delay(random(100,5000));
     Heltec.display->clear();
     Heltec.display->drawString(0, 0,  id ? "ID: " + String(id) : "Waiting for ID...");
+    Heltec.display->drawString(0, 15, "HW ID: " + String(hardware_id));
     Heltec.display->display();
     // ask for id
     do {
@@ -150,7 +151,7 @@ void loop() {
   }
 
   // respond to request for data
-  if(rx) {
+  if(rx && id) {
     Serial.println("Packet: " + type + String(rx_id));
     if(type == "RQ" && rx_id == id) { // server request packet
       setSensorData();
